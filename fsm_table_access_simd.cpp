@@ -303,15 +303,21 @@ static void* thread_func(struct thread_data* thr_data)
 	{
 		for (uint32_t index = 0; index < count_of_input_indices; index += 4)
 		{
-			indices_arr[index    ] = (indices_arr[index    ] ^ INDEX_XOR_VAL) + thr_data->id;
-			indices_arr[index + 1] = (indices_arr[index + 1] ^ INDEX_XOR_VAL) + thr_data->id;
-			indices_arr[index + 2] = (indices_arr[index + 2] ^ INDEX_XOR_VAL) + thr_data->id;
-			indices_arr[index + 3] = (indices_arr[index + 3] ^ INDEX_XOR_VAL) + thr_data->id;
+			__m128i indices = _mm_set_epi32(
+					(indices_arr[index    ] ^ INDEX_XOR_VAL) + thr_data->id,
+					(indices_arr[index + 1] ^ INDEX_XOR_VAL) + thr_data->id,
+					(indices_arr[index + 2] ^ INDEX_XOR_VAL) + thr_data->id,
+					(indices_arr[index + 3] ^ INDEX_XOR_VAL) + thr_data->id);
 
-			value0 = (value0 ^ table[indices_arr[index    ] & table_index_mask]) & TABLE_ADD_VAL;
-			value1 = (value1 ^ table[indices_arr[index + 1] & table_index_mask]) & TABLE_ADD_VAL;
-			value2 = (value2 ^ table[indices_arr[index + 2] & table_index_mask]) & TABLE_ADD_VAL;
-			value3 = (value3 ^ table[indices_arr[index + 3] & table_index_mask]) & TABLE_ADD_VAL;
+			value0 = (value0 ^ table[_mm_extract_epi32(indices, 0) & table_index_mask]) & TABLE_ADD_VAL;
+			value1 = (value1 ^ table[_mm_extract_epi32(indices, 1) & table_index_mask]) & TABLE_ADD_VAL;
+			value2 = (value2 ^ table[_mm_extract_epi32(indices, 2) & table_index_mask]) & TABLE_ADD_VAL;
+			value3 = (value3 ^ table[_mm_extract_epi32(indices, 3) & table_index_mask]) & TABLE_ADD_VAL;
+
+			indices_arr[index    ] = _mm_extract_epi32(indices, 0);
+			indices_arr[index + 1] = _mm_extract_epi32(indices, 1);
+			indices_arr[index + 2] = _mm_extract_epi32(indices, 2);
+			indices_arr[index + 3] = _mm_extract_epi32(indices, 3);
 		}
 	}
 	clock_gettime(CLOCK_MONOTONIC_RAW, &end);
