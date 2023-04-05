@@ -1,0 +1,10 @@
+#!/bin/bash
+
+for j in $(seq 1 32); do
+	echo "t=$j"
+	for i in $(seq 11 30); do
+		size_mul=$((1<<i))
+		echo -n "t=$j s=$((size_mul)) "
+		./fsm_table_access_simd -l .. -c 1000 -t $((size_mul)) -d $j -i $((512*1024)) | grep "transactions"
+	done
+done
